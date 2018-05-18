@@ -30,32 +30,29 @@ const configuration = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
 const pcPeers = {};
 let localStream;
 
-function getLocalStream(isFront, callback) {
-  MediaStreamTrack.getSources(sourceInfos => {
-    console.log(sourceInfos);
-    let videoSourceId;
-    for (const i = 0; i < sourceInfos.length; i++) {
-      const sourceInfo = sourceInfos[i];
-      if(sourceInfo.kind == "video" && sourceInfo.facing == (isFront ? "front" : "back")) {
-        videoSourceId = sourceInfo.id;
-      }
-    }
-    getUserMedia({
-      audio: true,
-      video: {
-        mandatory: {
-          minWidth: 500, // Provide your own width, height and frame rate here
-          minHeight: 300,
-          minFrameRate: 30
-        },
-        facingMode: (isFront ? "user" : "environment"),
-        optional: (videoSourceId ? [{sourceId: videoSourceId}] : [])
-      }
-    }, function (stream) {
-      console.log('dddd', stream);
-      callback(stream);
-    }, logError);
-  });
+function getLocalStream(isFront) {
+  return MediaStreamTrack
+    .getSources()
+    .then((sourceInfos) => {
+      const videoSource = sourceInfos.find(s => s.kind == "video" && s.facing == (isFront ? "front" : "back"));
+      return getUserMedia({
+        audio: true,
+        video: {
+          mandatory: {
+            minWidth: 500, // Provide your own width, height and frame rate here
+            minHeight: 300,
+            minFrameRate: 30
+          },
+          facingMode: (isFront ? "user" : "environment"),
+          optional: (videoSource.id ? [{sourceId: videoSource.id }] : [])
+        }
+      });
+    })
+    .then(stream => {
+      console.log('Stream Ready', stream);
+      return stream;
+    })
+    .catch(logError);
 }
 
 function join(roomID) {
@@ -202,7 +199,7 @@ socket.on('leave', function(socketId){
 
 socket.on('connect', function(data) {
   console.log('connect');
-  getLocalStream(true, function(stream) {
+  getLocalStream(true).then((stream) => {
     localStream = stream;
     container.setState({selfViewSrc: stream.toURL()});
     container.setState({status: 'ready', info: 'Please enter or create room ID'});
