@@ -51,15 +51,7 @@ function getLocalStream(isFront, callback) {
   }
   getUserMedia({
     audio: true,
-    video: {
-      mandatory: {
-        minWidth: 640, // Provide your own width, height and frame rate here
-        minHeight: 360,
-        minFrameRate: 30,
-      },
-      facingMode: (isFront ? "user" : "environment"),
-      optional: (videoSourceId ? [{sourceId: videoSourceId}] : []),
-    }
+    video: false
   }, function (stream) {
     console.log('getUserMedia success', stream);
     callback(stream);
@@ -353,12 +345,6 @@ const RCTWebRTCDemo = React.createClass({
               <Text>Enter room</Text>
             </TouchableHighlight>
           </View>) : null
-        }
-        <RTCView streamURL={this.state.selfViewSrc} style={styles.selfView}/>
-        {
-          mapHash(this.state.remoteList, function(remote, index) {
-            return <RTCView key={index} streamURL={remote} style={styles.remoteView}/>
-          })
         }
       </View>
     );
